@@ -98,6 +98,13 @@
             <version>8.0.1.Final</version>
         </dependency>
 
+        <!-- Azure Event Grid -->
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-messaging-eventgrid</artifactId>
+            <version>4.21.0</version>
+        </dependency>
+
         <!-- Jakarta Expression Language -->
         <dependency>
             <groupId>org.glassfish</groupId>

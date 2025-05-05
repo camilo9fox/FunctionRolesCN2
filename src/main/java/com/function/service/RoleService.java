@@ -6,18 +6,25 @@ import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.Persistence;
 import java.util.List;
+import com.function.events.EventGridPublisher;
 
 public class RoleService {
     private final EntityManagerFactory emf;
+    private final EventGridPublisher eventPublisher;
 
     public RoleService() {
         this.emf = Persistence.createEntityManagerFactory("OracleDB");
+        this.eventPublisher = new EventGridPublisher();
     }
 
     public Rol getRoleById(Long id) {
         EntityManager em = emf.createEntityManager();
         try {
-            return em.find(Rol.class, id);
+            Rol rol = em.find(Rol.class, id);
+            if (rol != null) {
+                eventPublisher.publishRoleRetrieved(rol);
+            }
+            return rol;
         } finally {
             em.close();
         }
@@ -26,9 +33,13 @@ public class RoleService {
     public Rol getRoleByName(String nombreRol) {
         EntityManager em = emf.createEntityManager();
         try {
-            return em.createQuery("SELECT r FROM Rol r WHERE r.nombreRol = :nombreRol", Rol.class)
+            Rol rol = em.createQuery("SELECT r FROM Rol r WHERE r.nombreRol = :nombreRol", Rol.class)
                     .setParameter("nombreRol", nombreRol)
                     .getSingleResult();
+            if (rol != null) {
+                eventPublisher.publishRoleRetrieved(rol);
+            }
+            return rol;
         } catch (Exception e) {
             return null; 
         } finally {
@@ -39,7 +50,9 @@ public class RoleService {
     public List<Rol> getAllRoles() {
         EntityManager em = emf.createEntityManager();
         try {
-            return em.createQuery("SELECT r FROM Rol r", Rol.class).getResultList();
+            List<Rol> roles = em.createQuery("SELECT r FROM Rol r", Rol.class).getResultList();
+            eventPublisher.publishRolesRetrieved(roles);
+            return roles;
         } finally {
             em.close();
         }
@@ -50,8 +63,9 @@ public class RoleService {
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
-            Rol rolPersistido = em.merge(rol); // ← Usa merge en lugar de persist
+            Rol rolPersistido = em.merge(rol);
             tx.commit();
+            eventPublisher.publishRoleCreated(rolPersistido);
             return rolPersistido;
         } catch (Exception e) {
             if (tx.isActive()) {
@@ -82,6 +96,7 @@ public class RoleService {
 
             Rol updatedRol = em.merge(existingRol);
             tx.commit();
+            eventPublisher.publishRoleUpdated(updatedRol);
             return updatedRol;
         } catch (Exception e) {
             if (tx.isActive()) {
@@ -101,10 +116,11 @@ public class RoleService {
             Rol rol = em.find(Rol.class, id);
             if (rol != null) {
                 em.remove(rol);
+                tx.commit();
+                eventPublisher.publishRoleDeleted(id);
             } else {
                 throw new IllegalArgumentException("Rol no encontrado");
             }
-            tx.commit();
         } catch (Exception e) {
             if (tx.isActive()) {
                 tx.rollback();
