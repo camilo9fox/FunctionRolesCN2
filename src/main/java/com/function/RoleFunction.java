@@ -159,4 +159,70 @@ public class RoleFunction {
                 .build();
         }
     }
+
+    @FunctionName("DeleteRole")
+    public HttpResponseMessage deleteRole(
+        @HttpTrigger(
+            name = "req",
+            methods = {HttpMethod.DELETE},
+            authLevel = AuthorizationLevel.ANONYMOUS
+        ) HttpRequestMessage<Optional<String>> request,
+        final ExecutionContext context
+    ) {
+        context.getLogger().info("Procesando solicitud DELETE para roles");
+        try {
+            String idParam = request.getQueryParameters().get("id");
+            if (idParam == null) {
+                return request.createResponseBuilder(HttpStatus.BAD_REQUEST)
+                    .body("Se requiere el parámetro 'id'")
+                    .build();
+            }
+
+            long id;
+            try {
+                id = Long.parseLong(idParam);
+            } catch (NumberFormatException e) {
+                return request.createResponseBuilder(HttpStatus.BAD_REQUEST)
+                    .body("ID inválido")
+                    .build();
+            }
+
+            // Verificar si se está intentando eliminar el rol con ID 66
+            if (id == 66) {
+                return request.createResponseBuilder(HttpStatus.BAD_REQUEST)
+                    .body("No se puede eliminar el rol 'Sin rol' (ID: 66)")
+                    .build();
+            }
+
+            // Verificar si el rol existe
+            Rol rolExistente = roleService.getRoleById(id);
+            if (rolExistente == null) {
+                throw new RolNotFoundException("Rol no encontrado");
+            }
+
+            // Verificar y actualizar usuarios que tengan este rol
+            boolean usuariosActualizados = roleService.updateUsersRoleToDefault(id);
+            
+            // Eliminar el rol
+            roleService.deleteRole(id);
+
+            String mensaje = usuariosActualizados 
+                ? "Rol eliminado exitosamente. Los usuarios con este rol han sido actualizados al rol 'Sin rol'."
+                : "Rol eliminado exitosamente.";
+
+            return request.createResponseBuilder(HttpStatus.OK)
+                .body(mensaje)
+                .build();
+
+        } catch (RolNotFoundException e) {
+            return request.createResponseBuilder(HttpStatus.NOT_FOUND)
+                .body(e.getMessage())
+                .build();
+        } catch (Exception e) {
+            context.getLogger().severe("Error al eliminar el rol: " + e.getMessage());
+            return request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Error interno del servidor: " + e.getMessage())
+                .build();
+        }
+    }
 }

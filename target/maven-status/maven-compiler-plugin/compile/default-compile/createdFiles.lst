@@ -1,12 +1,13 @@
 com\function\RoleFunction.class
-com\function\service\PasswordService.class
 com\function\exception\ValidationException.class
-com\function\service\RoleService.class
-com\function\events\EventGridPublisher$1.class
-com\function\validation\StrongPassword.class
 com\function\events\EventGridPublisher.class
 com\function\model\Rol.class
 com\function\validation\StrongPasswordValidator.class
 com\function\events\RolesRetrievedEvent.class
+com\function\model\Usuario.class
 com\function\events\RoleEvent.class
 com\function\exception\RolNotFoundException.class
+com\function\service\PasswordService.class
+com\function\service\RoleService.class
+com\function\events\EventGridPublisher$1.class
+com\function\validation\StrongPassword.class

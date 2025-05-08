@@ -1,0 +1,15 @@
+{
+  "scriptFile" : "../CrudUser-1.0-SNAPSHOT.jar",
+  "entryPoint" : "com.function.RoleFunction.deleteRole",
+  "bindings" : [ {
+    "type" : "httpTrigger",
+    "direction" : "in",
+    "name" : "req",
+    "methods" : [ "DELETE" ],
+    "authLevel" : "ANONYMOUS"
+  }, {
+    "type" : "http",
+    "direction" : "out",
+    "name" : "$return"
+  } ]
+}
